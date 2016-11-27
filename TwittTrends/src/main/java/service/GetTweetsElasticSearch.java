@@ -63,15 +63,15 @@ public class GetTweetsElasticSearch extends HttpServlet {
 		String searchParameter = request.getParameter("keyword");
 		String scrollIdParameter = request.getParameter("scrollId");
 		request.setAttribute("keyWord", searchParameter);
-		// System.out.println(scrollIdParameter);
+		System.out.println("Param:"+scrollIdParameter);
 
 		JestClientFactory factory = new JestClientFactory();
 		factory.setHttpClientConfig(new HttpClientConfig.Builder(elasticSearchURL).multiThreaded(true).build());
 		JestClient client = factory.getObject();
 
-		if (scrollIdParameter == null) {
+		if (scrollIdParameter == null || scrollIdParameter.equals("")) {
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-			searchSourceBuilder.size(5);
+			searchSourceBuilder.size(50);
 			searchSourceBuilder.from(0);
 
 			if (searchParameter != null && !searchParameter.isEmpty())
@@ -86,11 +86,11 @@ public class GetTweetsElasticSearch extends HttpServlet {
 			result = client.execute(search);
 		} else {
 			// System.out.println("Executing scroll");
-			SearchScroll scroll = new SearchScroll.Builder(scrollIdParameter, "2m").setParameter(Parameters.SIZE, 5)
+			SearchScroll scroll = new SearchScroll.Builder(scrollIdParameter, "2m").setParameter(Parameters.SIZE, 50)
 					.build();
 			result = client.execute(scroll);
 		}
-		// System.out.println(result.getJsonString());
+		System.out.println(result.getJsonString());
 		scrollId = result.getJsonObject().getAsJsonPrimitive("_scroll_id").getAsString();
 
 		List<Tweet> tweets = result.getSourceAsObjectList(Tweet.class);

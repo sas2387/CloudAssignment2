@@ -47,7 +47,8 @@
 	var map;
 	var markers;
 	var markerCluster;
-	scrollId="";
+	var interval;
+	var scrollId="";
 	limit=10000;
 	lastCount=0;
 	
@@ -89,35 +90,28 @@
 	}
 	
 	
-	function loadLocations() {	
+	function loadLocations() {
+		if(interval !== null){
+			clearInterval(interval);
+		}
 		var keywordVal = document.getElementById('keyword').value;
-		
-		
 		    	$.get("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal, function(results, status){
-	            	//alert("Data: " + results + "\nStatus: " + status);
-	            	
-	            	//if(keywordVal != null && keywordVal != ""){
-	            		//clearInterval(interval);
 	            		locations = [];
 						tweetsText = [];
 						
 						deleteMapMarkers();
-	            	//}
+	            	
 	            	var result = JSON.parse(results);
-	            	//alert(result.tweets.length)
 	            	var tweets = result.tweets;
 	            	lastCount+=tweets.length;
 	            	scrollId=result.scrollId;
-	            	//alert(scrollId);
 	            	
 	         		for (var i=0;i <tweets.length; i++){
 	         			var newLocation = {location : {lat : tweets[i].lat, lng : tweets[i].lng}, text : tweets[i].text, sentiment : tweets[i].sentiment};
 	         			locations.push(newLocation);
 	         			tweetsText.push(tweets[i].text);
 	         		}
-	         		//alert(locations.length)
-	         		if(keywordVal == null || keywordVal == "")
-	         			interval = setInterval(loadNewLocations, 10000);
+	         		interval = setInterval(loadNewLocations, 10000);
 	         		initMap();
 	        	});
 	}
@@ -239,6 +233,5 @@
 </body>
 <script type="text/javascript">
 loadLocations();
-
 </script>
 </html>
