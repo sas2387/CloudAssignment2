@@ -49,16 +49,18 @@
 	var markerCluster;
 	var interval;
 	var scrollId="";
-	limit=10000;
-	lastCount=0;
+	var limit=10000;
+	var lastCount=0;
 	
 	function loadNewLocations() {
 		var keywordVal = document.getElementById('keyword').value;
 		$.get("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal, function(results, status){
-        	
+			console.log("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal);
+			
         	var result = JSON.parse(results);
         	var tweets = result.tweets;
         	scrollId=result.scrollId;
+        	console.log("scrollid:"+scrollId);
         	lastCount+=tweets.length;
         	//alert(lastCount)
         	if(lastCount>limit){
@@ -93,10 +95,12 @@
 	function loadLocations() {
 		if(interval !== null){
 			clearInterval(interval);
+			scrollId = "";
 		}
 		var keywordVal = document.getElementById('keyword').value;
 		    	$.get("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal, function(results, status){
-	            		locations = [];
+	            		console.log("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal);
+		    			locations = [];
 						tweetsText = [];
 						
 						deleteMapMarkers();
@@ -105,6 +109,7 @@
 	            	var tweets = result.tweets;
 	            	lastCount+=tweets.length;
 	            	scrollId=result.scrollId;
+	            	console.log("scrollid:"+scrollId);
 	            	
 	         		for (var i=0;i <tweets.length; i++){
 	         			var newLocation = {location : {lat : tweets[i].lat, lng : tweets[i].lng}, text : tweets[i].text, sentiment : tweets[i].sentiment};
@@ -199,8 +204,7 @@
 		<br> <br> <br> <br> <br> <br> <br>
 		<br>
 
-		<form id="searchForm" name="searchForm" method="get"
-			action="javascript::loadLocations()" style="margin-top: 35%">
+		<form id="searchForm" name="searchForm" method="get" style="margin-top: 35%">
 			<table>
 				<tr>
 					<td>Select Keyword</td>
@@ -208,21 +212,21 @@
 				<tr>
 					<td><select id="keyword" name="keyword">
 							<option value="">--select--</option>
-							<option value="love">Love</option>
+							<option value="world">World</option>
 							<option value="travel">Travel</option>
 							<option value="friend">Friend</option>
 							<option value="fun">Fun</option>
-							<option value="trump">Trump</option>
-							<option value="hillary">Hillary</option>
+							<option value="game">Game</option>
+							<option value="accident">Accident</option>
 							<option value="job">Job</option>
-							<option value="debate">Debate</option>
-							<option value="election">Election</option>
+							<option value="photo">Photo</option>
+							<option value="work">Work</option>
 							<option value="hiring">Hiring</option>
 					</select></td>
 				</tr>
 				<tr>
-					<td><input type="submit" id="submit" value="Search"
-						onclick="loadLocations()" /></td>
+					<td><input type="button" id="submit" value="Search"
+						onclick="loadLocations();" /></td>
 				</tr>
 			</table>
 		</form>
