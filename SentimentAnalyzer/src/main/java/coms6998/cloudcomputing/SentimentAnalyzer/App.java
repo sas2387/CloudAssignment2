@@ -127,6 +127,7 @@ public class App {
 				params.append("apikey=" + key);
 				params.append("&text=" + URLEncoder.encode(text,"ASCII"));
 				params.append("&outputMode=json");
+				params.append("&language=english");
 				params.append("&showSourceText=1");
 
 				StringBuilder uri = new StringBuilder();

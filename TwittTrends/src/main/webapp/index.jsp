@@ -114,7 +114,6 @@
 	         			var newLocation = {location : {lat : tweets[i].lat, lng : tweets[i].lng}, text : tweets[i].text, sentiment : tweets[i].sentiment};
 	         			locations.push(newLocation);
 	         			tweetsText.push(tweets[i].text);
-	         			
 	         		}
 	         		//alert(locations.length)
 	         		if(keywordVal == null || keywordVal == "")

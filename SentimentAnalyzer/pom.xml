@@ -38,13 +38,6 @@
 			<artifactId>alchemy</artifactId>
 			<version>3.5.1</version>
 		</dependency>
-
-		<dependency>
-			<groupId>com.ibm.watson.developer_cloud</groupId>
-			<artifactId>alchemy</artifactId>
-			<version>3.5.1</version>
-		</dependency>
-
 	</dependencies>
 
 </project>
