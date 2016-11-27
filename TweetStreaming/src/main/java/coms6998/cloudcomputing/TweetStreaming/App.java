@@ -90,12 +90,18 @@ public class App {
 
 			public void onTrackLimitationNotice(int arg0) {
 				// TODO Auto-generated method stub
-
+			}
+			
+			private boolean isEnglish(String s) {
+				for(char c:s.toCharArray()){
+					if(c < 32 || c > 126)
+						return false;
+				}
+				return true;
 			}
 
 			public void onStatus(Status status) {
-
-				if (status.getGeoLocation() != null && status.getText().matches("\\w+")) {
+				if (status.getGeoLocation() != null && isEnglish(status.getText())) {
 					Tweet newTweet = new Tweet();
 					SimpleDateFormat sdf = new SimpleDateFormat(
 							"yyyy-MM-dd HH:mm:ss");
@@ -114,23 +120,6 @@ public class App {
 					JSONObject jsonObject = new JSONObject(newTweet);
 					System.out.println("Sent:"+jsonObject);
 					sqs.sendMessage(new SendMessageRequest(queueUrl, jsonObject.toString()));
-					
-					
-					
-					ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
-		            List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-		            for (Message message : messages) {
-		                System.out.println("  Message");
-		                System.out.println("    MessageId:     " + message.getMessageId());
-		                System.out.println("    ReceiptHandle: " + message.getReceiptHandle());
-		                System.out.println("    MD5OfBody:     " + message.getMD5OfBody());
-		                System.out.println("    Body:          " + message.getBody());
-		                for (Entry<String, String> entry : message.getAttributes().entrySet()) {
-		                    System.out.println("  Attribute");
-		                    System.out.println("    Name:  " + entry.getKey());
-		                    System.out.println("    Value: " + entry.getValue());
-		                }
-		            }
 				}
 			}
 
