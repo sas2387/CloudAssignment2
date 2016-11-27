@@ -10,7 +10,7 @@
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>10k Tweets by HW Group 35</title>
+    <title>TweetTrensds by HW Group 35</title>
     <style>
       html, body {
         height: 100%;
@@ -93,16 +93,16 @@
 		var keywordVal = document.getElementById('keyword').value;
 		
 		
-		    	$.get("<%= request.getContextPath().toString()%>/gettweetselasticsearch?keyword="+keywordVal, function(results, status){
+		    	$.get("<%= request.getContextPath().toString()%>/gettweetselasticsearch?scrollId="+scrollId+"&keyword="+keywordVal, function(results, status){
 	            	//alert("Data: " + results + "\nStatus: " + status);
 	            	
-	            	if(keywordVal != null && keywordVal != ""){
+	            	//if(keywordVal != null && keywordVal != ""){
 	            		//clearInterval(interval);
 	            		locations = [];
 						tweetsText = [];
 						
 						deleteMapMarkers();
-	            	}
+	            	//}
 	            	var result = JSON.parse(results);
 	            	//alert(result.tweets.length)
 	            	var tweets = result.tweets;
