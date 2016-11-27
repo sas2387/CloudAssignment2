@@ -44,7 +44,7 @@ public class App {
          */
         AWSCredentials credentials = null;
         try {
-            credentials = new ProfileCredentialsProvider("siddharth").getCredentials();
+            credentials = new ProfileCredentialsProvider("default").getCredentials();
         } catch (Exception e) {
             throw new AmazonClientException(
                     "Cannot load the credentials from the credential profiles file. " +

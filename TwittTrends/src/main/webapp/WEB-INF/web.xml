@@ -3,17 +3,36 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-  <display-name>Archetype Created Web Application</display-name>
-  
-  
-  <servlet>
-  	<servlet-name>TweetIndexer</servlet-name>
-  	<servlet-class>service.TweetIndexer</servlet-class>
-  </servlet>
-  
-  <servlet-mapping>
-  	<servlet-name>TweetIndexer</servlet-name>
-  	<url-pattern>/indextweet</url-pattern>
-  </servlet-mapping>
-  
+	<display-name>Archetype Created Web Application</display-name>
+	
+	<context-param>
+		<param-name>googleMapAPIKey</param-name>
+		<param-value>AIzaSyAocIBOF8Co8ZrkQHZHFcGaL8fpexaqLOc</param-value>
+	</context-param>
+	<context-param>
+		<param-name>elasticSearchURL</param-name>
+		<param-value>https://search-tweetsentiments-jg27mbmxojtxfduhcceqqkwkwa.us-east-1.es.amazonaws.com:443</param-value>
+	</context-param>
+
+	<servlet>
+		<servlet-name>TweetIndexer</servlet-name>
+		<servlet-class>service.TweetIndexer</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GetTweetsElasticSearch</servlet-name>
+		<display-name>GetTweetsElasticSearch</display-name>
+		<description></description>
+		<servlet-class>service.GetTweetsElasticSearch</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>TweetIndexer</servlet-name>
+		<url-pattern>/indextweet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GetTweetsElasticSearch</servlet-name>
+		<url-pattern>/gettweetselasticsearch</url-pattern>
+	</servlet-mapping>
+
+
+
 </web-app>
