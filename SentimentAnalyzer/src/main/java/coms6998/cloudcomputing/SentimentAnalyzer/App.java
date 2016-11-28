@@ -4,11 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +17,7 @@ import org.json.JSONObject;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.profile.ProfilesConfigFile;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNSClient;
@@ -43,14 +42,12 @@ public class App {
 	private static AWSCredentials credentials;
 
 	public static void main(String[] args) {
-		/*
-		 * The ProfileCredentialsProvider will return your [default] credential
-		 * profile by reading from the credentials file located at
-		 * (~/.aws/credentials).
-		 */
+
 		credentials = null;
 		try {
-			credentials = new ProfileCredentialsProvider("siddharth")
+			ProfilesConfigFile configFile = new ProfilesConfigFile(
+					"aws_credentials.properties");
+			credentials = new ProfileCredentialsProvider(configFile, "default")
 					.getCredentials();
 		} catch (Exception e) {
 			throw new AmazonClientException(
@@ -86,7 +83,6 @@ public class App {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	static public class WorkerThread implements Runnable {
@@ -109,9 +105,10 @@ public class App {
 					.getMessages();
 			System.out.println(messages.size());
 			for (Message message : messages) {
-	            String messageReceiptHandle = message.getReceiptHandle();
-	            sqs.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));
-	            
+				String messageReceiptHandle = message.getReceiptHandle();
+				sqs.deleteMessage(new DeleteMessageRequest(queueUrl,
+						messageReceiptHandle));
+
 				JSONObject jsonObject;
 				JSONObject response = null;
 				try {
@@ -125,7 +122,7 @@ public class App {
 
 				StringBuilder params = new StringBuilder();
 				params.append("apikey=" + key);
-				params.append("&text=" + URLEncoder.encode(text,"ASCII"));
+				params.append("&text=" + URLEncoder.encode(text, "ASCII"));
 				params.append("&outputMode=json");
 				params.append("&language=english");
 				params.append("&showSourceText=1");
@@ -158,24 +155,29 @@ public class App {
 				} catch (IOException ex) {
 					System.out.println("IO Exception ");
 				}
-				if(response!=null){
-					try{
-					String sentiment = response.getJSONObject("docSentiment").getString("type");
-					jsonObject.put("sentiment", sentiment);
-					String topicArn = "arn:aws:sns:us-west-2:908762746590:tweets";
-					AmazonSNSClient snsClient = new AmazonSNSClient(credentials);		                           
-					snsClient.setRegion(Region.getRegion(Regions.US_WEST_2));
-					PublishRequest publishRequest = new PublishRequest(topicArn, jsonObject.toString());
-					PublishResult publishResult = snsClient.publish(publishRequest);
-					System.out.println(publishResult.toString());
-					} catch(JSONException e){
+				if (response != null) {
+					try {
+						String sentiment = response.getJSONObject(
+								"docSentiment").getString("type");
+						jsonObject.put("sentiment", sentiment);
+						String topicArn = "arn:aws:sns:us-west-2:908762746590:tweets";
+						AmazonSNSClient snsClient = new AmazonSNSClient(
+								credentials);
+						snsClient
+								.setRegion(Region.getRegion(Regions.US_WEST_2));
+						PublishRequest publishRequest = new PublishRequest(
+								topicArn, jsonObject.toString());
+						PublishResult publishResult = snsClient
+								.publish(publishRequest);
+						System.out.println(publishResult.toString());
+					} catch (JSONException e) {
 						System.out.println("Skipped Tweet");
 						e.printStackTrace();
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
 					}
-				}else{
+				} else {
 					System.out.println("response null");
 				}
 			}

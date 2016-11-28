@@ -3,24 +3,20 @@ package service;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Bulk;
 import io.searchbox.core.Index;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.json.JSONObject;
 
 public class TweetIndexer extends HttpServlet {
@@ -68,9 +64,11 @@ public class TweetIndexer extends HttpServlet {
 
 		body = stringBuilder.toString();
 		System.out.println(body);
+
 		try {
 			JSONObject bodyJson = new JSONObject(body);
-			JSONObject tweetDetails = new JSONObject(bodyJson.getString("Message"));
+			JSONObject tweetDetails = new JSONObject(
+					bodyJson.getString("Message"));
 			Tweet tweet = new Tweet();
 			tweet.setId(tweetDetails.getString("id"));
 			tweet.setSentiment(tweetDetails.getString("sentiment"));
@@ -79,11 +77,12 @@ public class TweetIndexer extends HttpServlet {
 			tweet.setUser(tweetDetails.getString("user"));
 			tweet.setLng(tweetDetails.getDouble("lng"));
 			tweet.setLat(tweetDetails.getDouble("lat"));
-			
-			System.out.println("Sending:"+tweet);
+
+			System.out.println("Sending:" + tweet);
 			// Send tweets to Elastic Search
 			JestClientFactory factory = new JestClientFactory();
-			factory.setHttpClientConfig(new HttpClientConfig.Builder("https://search-tweetsentiments-jg27mbmxojtxfduhcceqqkwkwa.us-east-1.es.amazonaws.com:443")
+			factory.setHttpClientConfig(new HttpClientConfig.Builder(
+					"https://search-tweetsentiments-jg27mbmxojtxfduhcceqqkwkwa.us-east-1.es.amazonaws.com:443")
 					.multiThreaded(true).build());
 			final JestClient client = factory.getObject();
 

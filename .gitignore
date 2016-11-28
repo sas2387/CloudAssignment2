@@ -5,6 +5,7 @@ tmp/
 *.bak
 *.swp
 *~.nib
+aws_credentials.properties
 local.properties
 .settings/
 .loadpath

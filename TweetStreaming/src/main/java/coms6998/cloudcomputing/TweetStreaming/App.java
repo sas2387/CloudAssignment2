@@ -1,20 +1,17 @@
 package coms6998.cloudcomputing.TweetStreaming;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.profile.ProfilesConfigFile;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 
 import twitter4j.FilterQuery;
@@ -31,45 +28,41 @@ import twitter4j.conf.ConfigurationBuilder;
  *
  */
 public class App {
-	
+
 	static String queueUrl = null;
 	static AmazonSQS sqs = null;
-	
+
 	public static void main(String[] args) {
-		
-		/*
-         * The ProfileCredentialsProvider will return your [default]
-         * credential profile by reading from the credentials file located at
-         * (~/.aws/credentials).
-         */
-        AWSCredentials credentials = null;
-        try {
-            credentials = new ProfileCredentialsProvider("default").getCredentials();
-        } catch (Exception e) {
-            throw new AmazonClientException(
-                    "Cannot load the credentials from the credential profiles file. " +
-                    "Please make sure that your credentials file is at the correct " +
-                    "location (~/.aws/credentials), and is in valid format.",
-                    e);
-        }
 
-        sqs = new AmazonSQSClient(credentials);
-        Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-        sqs.setRegion(usWest2);
+		AWSCredentials credentials = null;
+		try {
+			ProfilesConfigFile configFile = new ProfilesConfigFile(
+					"aws_credentials.properties");
+			credentials = new ProfileCredentialsProvider(configFile, "default")
+					.getCredentials();
+		} catch (Exception e) {
+			throw new AmazonClientException(
+					"Cannot load the credentials from the credential profiles file. "
+							+ "Please make sure that your credentials file is at the correct "
+							+ "location (~/.aws/credentials), and is in valid format.",
+					e);
+		}
 
-        System.out.println("===========================================");
-        System.out.println("Getting Started with Amazon SQS");
-        System.out.println("===========================================\n");
+		sqs = new AmazonSQSClient(credentials);
+		Region usWest2 = Region.getRegion(Regions.US_WEST_2);
+		sqs.setRegion(usWest2);
 
-        try {
-            // Create a queue
-            queueUrl = sqs.listQueues("TweetQueue").getQueueUrls().get(0);
-            System.out.println(queueUrl);
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-		
-		
+		System.out.println("===========================================");
+		System.out.println("Getting Started with Amazon SQS");
+		System.out.println("===========================================\n");
+
+		try {
+			// Create a queue
+			queueUrl = sqs.listQueues("TweetQueue").getQueueUrls().get(0);
+			System.out.println(queueUrl);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true);
@@ -91,17 +84,18 @@ public class App {
 			public void onTrackLimitationNotice(int arg0) {
 				// TODO Auto-generated method stub
 			}
-			
+
 			private boolean isEnglish(String s) {
-				for(char c:s.toCharArray()){
-					if(c < 32 || c > 126)
+				for (char c : s.toCharArray()) {
+					if (c < 32 || c > 126)
 						return false;
 				}
 				return true;
 			}
 
 			public void onStatus(Status status) {
-				if (status.getGeoLocation() != null && isEnglish(status.getText())) {
+				if (status.getGeoLocation() != null
+						&& isEnglish(status.getText())) {
 					Tweet newTweet = new Tweet();
 					SimpleDateFormat sdf = new SimpleDateFormat(
 							"yyyy-MM-dd HH:mm:ss");
@@ -118,8 +112,9 @@ public class App {
 					newTweet.setUser(status.getUser().getScreenName());
 
 					JSONObject jsonObject = new JSONObject(newTweet);
-					System.out.println("Sent:"+jsonObject);
-					sqs.sendMessage(new SendMessageRequest(queueUrl, jsonObject.toString()));
+					System.out.println("Sent:" + jsonObject);
+					sqs.sendMessage(new SendMessageRequest(queueUrl, jsonObject
+							.toString()));
 				}
 			}
 
@@ -141,12 +136,10 @@ public class App {
 
 		twitterStream.addListener(statusListener);
 		FilterQuery fq = new FilterQuery();
-		fq.language(new String[]{"en"});
+		fq.language(new String[] { "en" });
 		double locations[][] = { { -180, -90 }, { 180, 90 } };
 		fq.locations(locations);
 		twitterStream.filter(fq);
-
-		//twitterStream.sample();
 	}
 
 }
