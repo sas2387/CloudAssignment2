@@ -1,4 +1,4 @@
-package coms6998.cloudcomputing.SentimentAnalyzer;
+package coms6998.cloudcomputing.KafkaConsumer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,11 +6,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,32 +28,26 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 
 /**
  * Hello world!
  *
  */
 public class App {
-	static String queueUrl = null;
-	static AmazonSQS sqs = null;
-	static ExecutorService executor;
 	private static String baseURL = "http://access.alchemyapi.com/calls/text/TextGetTextSentiment";
 	private static String key = "724912170947543d2de401b5b4b3707fb329d011";
-	private static AWSCredentials credentials;
+	static AWSCredentials credentials;
+	static ExecutorService executor;
+	static String topicName = "tweetsentiments";
+	static Properties props;
 
 	public static void main(String[] args) {
-
 		credentials = null;
 		try {
 			ProfilesConfigFile configFile = new ProfilesConfigFile(
 					"aws_credentials.properties");
-			credentials = new ProfileCredentialsProvider(configFile, "siddharth")
-					.getCredentials();
+			credentials = new ProfileCredentialsProvider(configFile,
+					"siddharth").getCredentials();
 		} catch (Exception e) {
 			throw new AmazonClientException(
 					"Cannot load the credentials from the credential profiles file. "
@@ -57,25 +56,31 @@ public class App {
 					e);
 		}
 
-		sqs = new AmazonSQSClient(credentials);
-		Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-		sqs.setRegion(usWest2);
+		props = new Properties();
 
-		System.out.println("===========================================");
-		System.out.println("Getting Started with Amazon SQS");
-		System.out.println("===========================================\n");
-
-		try {
-			// Create a queue
-			queueUrl = sqs.listQueues("TweetQueue").getQueueUrls().get(0);
-			System.out.println(queueUrl);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		props.put("bootstrap.servers", "localhost:9092");
+		props.put("group.id", "test");
+		props.put("enable.auto.commit", "true");
+		props.put("auto.commit.interval.ms", "1000");
+		props.put("session.timeout.ms", "30000");
+		props.put("key.deserializer",
+				"org.apache.kafka.common.serialization.StringDeserializer");
+		props.put("value.deserializer",
+				"org.apache.kafka.common.serialization.StringDeserializer");
 
 		executor = Executors.newFixedThreadPool(5);
-		Runnable worker = new WorkerThread();
-		executor.execute(worker);
+
+		for (int i = 0; i < 5; i++) {
+			Runnable worker = new WorkerThread();
+			executor.execute(worker);
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		// executor.shutdown();
 
 		try {
@@ -83,9 +88,18 @@ public class App {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	static public class WorkerThread implements Runnable {
+
+		KafkaConsumer<String, String> consumer;
+
+		public WorkerThread() {
+			System.out.println("Worker Created");
+			consumer = new KafkaConsumer<String, String>(props);
+			consumer.subscribe(Arrays.asList(topicName));
+		}
 
 		public void run() {
 			// TODO Auto-generated method stub
@@ -99,20 +113,13 @@ public class App {
 		}
 
 		private void processQueue() throws IOException {
-			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(
-					queueUrl);
-			List<Message> messages = sqs.receiveMessage(receiveMessageRequest)
-					.getMessages();
-			System.out.println(messages.size());
-			for (Message message : messages) {
-				String messageReceiptHandle = message.getReceiptHandle();
-				sqs.deleteMessage(new DeleteMessageRequest(queueUrl,
-						messageReceiptHandle));
-
+			ConsumerRecords<String, String> records = consumer.poll(100);
+			for (ConsumerRecord<String, String> record : records) {
+				System.out.println(record.value());
 				JSONObject jsonObject;
 				JSONObject response = null;
 				try {
-					jsonObject = new JSONObject(message.getBody());
+					jsonObject = new JSONObject(record.value());
 				} catch (Exception e) {
 					System.out.println("Catch");
 					continue;

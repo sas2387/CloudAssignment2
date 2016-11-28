@@ -1,18 +1,13 @@
-package coms6998.cloudcomputing.TweetStreaming;
+package coms6998.cloudcomputing.KafkaProducer;
 
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Properties;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.json.JSONObject;
-
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.auth.profile.ProfilesConfigFile;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
 
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
@@ -28,37 +23,22 @@ import twitter4j.conf.ConfigurationBuilder;
  *
  */
 public class App {
-
-	static String queueUrl = null;
-	static AmazonSQS sqs = null;
+	static String topicName = "tweetsentiments";
 
 	public static void main(String[] args) {
-
-		AWSCredentials credentials = null;
-		try {
-			ProfilesConfigFile configFile = new ProfilesConfigFile(
-					"aws_credentials.properties");
-			credentials = new ProfileCredentialsProvider(configFile, "siddharth")
-					.getCredentials();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		sqs = new AmazonSQSClient(credentials);
-		Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-		sqs.setRegion(usWest2);
-
-		System.out.println("===========================================");
-		System.out.println("Getting Started with Amazon SQS");
-		System.out.println("===========================================\n");
-
-		try {
-			// Create a queue
-			queueUrl = sqs.listQueues("TweetQueue").getQueueUrls().get(0);
-			System.out.println(queueUrl);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		Properties props = new Properties();
+		props.put("bootstrap.servers", "localhost:9092");
+		props.put("acks", "all");
+		props.put("retries", 0);
+		props.put("batch.size", 16384);
+		props.put("linger.ms", 1);
+		props.put("buffer.memory", 33554432);
+		props.put("key.serializer",
+				"org.apache.kafka.common.serialization.StringSerializer");
+		props.put("value.serializer",
+				"org.apache.kafka.common.serialization.StringSerializer");
+		final Producer<String, String> producer = new KafkaProducer<String, String>(
+				props);
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true);
@@ -109,8 +89,12 @@ public class App {
 
 					JSONObject jsonObject = new JSONObject(newTweet);
 					System.out.println("Sent:" + jsonObject);
-					sqs.sendMessage(new SendMessageRequest(queueUrl, jsonObject
-							.toString()));
+					String tweet = new String(jsonObject.toString().getBytes(
+							Charset.forName("US-ASCII")));
+					System.out.println("\nTweet:" + tweet);
+					ProducerRecord<String, String> record = new ProducerRecord<String, String>(
+							topicName, tweet);
+					producer.send(record);
 				}
 			}
 
@@ -136,6 +120,6 @@ public class App {
 		double locations[][] = { { -180, -90 }, { 180, 90 } };
 		fq.locations(locations);
 		twitterStream.filter(fq);
-	}
 
+	}
 }
